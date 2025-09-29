@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🚀 Webserv – Uploads & Delete 🚀</title>
+  <link rel="shortcut icon" href="/images/logo.png" type="image/x-icon" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Uploads & Delete</h1>
+    <p class="subtitle">Test complet du <strong>POST multipart/form-data</strong> et des requêtes <strong>DELETE</strong> dans <code>/uploads</code>.</p>
+
+    <!-- UPLOAD -->
+    <div class="card">
+      <h2>Uploader des fichiers</h2>
+      <form id="uploadForm" class="row" action="/uploads/" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" multiple />
+        <button type="submit">Uploader</button>
+        <span class="muted">→ POST vers <code>/uploads</code></span>
+      </form>
+      <div id="uploadStatus" class="status" style="display:none;"></div>
+    </div>
+
+    <!-- LIST + DELETE -->
+    <div class="card">
+      <div class="row" style="justify-content: space-between;">
+        <h2 style="margin:0;">Contenu de /uploads</h2>
+        <div class="row">
+          <button id="refreshBtn">Rafraîchir</button>
+          <a class="link pill" href="/uploads/" target="_blank">Ouvrir l’autoindex</a>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:6px;">Les fichiers listés proviennent de l’<em>autoindex</em> de <code>/uploads/</code>. Cliquez sur supprimer pour envoyer une requête <code>DELETE</code>.</p>
+      <ul id="fileList" class="files"></ul>
+      <div id="listStatus" class="muted" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- DELETE ARBITRAIRE -->
+    <div class="card">
+      <h3>Supprimer un chemin arbitraire (optionnel)</h3>
+      <div class="row">
+        <input type="text" id="manualPath" placeholder="/uploads/monfichier.ext" style="flex:1; min-width: 260px;"/>
+        <button id="manualDeleteBtn">DELETE</button>
+      </div>
+      <div id="manualDeleteStatus" class="status" style="display:none; margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <script>
+    function escHtml(s){ return s.replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function setStatus(el, text, ok=true){ el.style.display='block'; el.innerHTML = escHtml(text); el.classList.remove('bad','ok'); el.classList.add(ok?'ok':'bad'); }
+    function joinPath(...parts){ return parts.join('/').replace(/\/+/g,'/'); }
+
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(uploadForm);
+      uploadStatus.style.display='block';
+      setStatus(uploadStatus, 'Envoi...', true);
+      try {
+        const res = await fetch(uploadForm.action, { method: 'POST', body: fd });
+        const txt = await res.text();
+        setStatus(uploadStatus, `Status: ${res.status} ${res.statusText}\n\n${txt}`, res.ok);
+        await refreshList();
+      } catch (err) {
+        setStatus(uploadStatus, 'Erreur: ' + err, false);
+      }
+    });
+
+    const fileList = document.getElementById('fileList');
+    const listStatus = document.getElementById('listStatus');
+    document.getElementById('refreshBtn').addEventListener('click', refreshList);
+
+    async function refreshList(){
+      fileList.innerHTML = '';
+      listStatus.textContent = 'Chargement...';
+      try {
+        const res = await fetch('/uploads/');
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const links = Array.prototype.slice.call(doc.querySelectorAll('a'));
+        const items = links
+          .map(a => a.getAttribute('href') || '')
+          .filter(href => href && href !== './' && href !== '../');
+
+        if (items.length === 0) {
+          fileList.innerHTML = '<li class="muted">Aucun fichier pour le moment.</li>';
+          listStatus.textContent = '';
+          return;
+        }
+
+        items.forEach(href => {
+          let name = href;
+          if (!/^https?:\/\//i.test(href) && href.indexOf('/uploads/') !== 0) {
+            name = joinPath('/uploads/', href);
+          }
+          const li = document.createElement('li');
+          const left = document.createElement('div');
+          const right = document.createElement('div');
+          left.style.display = 'flex';
+          left.style.alignItems = 'center';
+          left.style.gap = '10px';
+
+          const a = document.createElement('a');
+          a.href = name;
+          a.textContent = name.replace(/^\/uploads\//,'');
+          a.target = '_blank';
+          a.className = 'link';
+
+          const delBtn = document.createElement('button');
+          delBtn.textContent = 'Supprimer';
+          delBtn.addEventListener('click', async () => {
+            delBtn.disabled = true;
+            delBtn.textContent = '...';
+            try {
+              const res = await fetch(name, { method: 'DELETE' });
+              await refreshList();
+            } catch (e) {
+              alert('Erreur: ' + e);
+            } finally {
+              delBtn.disabled = false;
+              delBtn.textContent = 'Supprimer';
+            }
+          });
+
+          left.appendChild(a);
+          right.appendChild(delBtn);
+          li.appendChild(left);
+          li.appendChild(right);
+          fileList.appendChild(li);
+        });
+
+        listStatus.textContent = '';
+      } catch (err) {
+        listStatus.textContent = 'Erreur de listing: ' + err;
+      }
+    }
+
+    // DELETE manuel
+    const manualPath = document.getElementById('manualPath');
+    const manualBtn = document.getElementById('manualDeleteBtn');
+    const manualStatus = document.getElementById('manualDeleteStatus');
+
+    manualBtn.addEventListener('click', async () => {
+      const p = manualPath.value.trim();
+      if (!p) return;
+      setStatus(manualStatus, 'DELETE ' + p + ' ...', true);
+      try {
+        const res = await fetch(p, { method: 'DELETE' });
+        const txt = await res.text();
+        setStatus(manualStatus, `Status: ${res.status} ${res.statusText}\n${txt}`, res.ok || res.status === 204);
+        await refreshList();
+      } catch (err) {
+        setStatus(manualStatus, 'Erreur: ' + err, false);
+      }
+    });
+
+    refreshList();
+  </script>
+</body>
+</html>

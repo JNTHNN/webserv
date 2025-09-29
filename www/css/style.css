@@ -1,0 +1,185 @@
+/* ============================
+   🌈 Webserv — rouge/bleu/mauve "moderne moche"
+   Fichier: /css/style.css
+   ============================ */
+
+/* Variables */
+:root{
+  --bg1: #ff0033;   /* rouge */
+  --bg2: #0066ff;   /* bleu */
+  --bg3: #9933ff;   /* mauve */
+  --glass: rgba(255,255,255,0.18);
+  --glass-strong: rgba(255,255,255,0.28);
+  --text: #ffffff;
+  --muted: #e4e4e4;
+  --card-border: rgba(255,255,255,0.35);
+  --shadow: rgba(0,0,0,0.5);
+  --ok: #22aa55;
+  --bad: #ff5050;
+}
+
+/* Reset light */
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  color:var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+
+  /* dégradé rouge → bleu → mauve */
+  background: linear-gradient(
+    135deg,
+    var(--bg1),
+    var(--bg2),
+    var(--bg3)
+  );
+  background-size: 400% 400%;
+  animation: rainbowShift 6s linear infinite;
+
+  display:flex;
+  flex-direction:column;
+  /* Page "centrée" par défaut (index). Pour test/404/autoindex on limite la largeur via .container */
+}
+@keyframes rainbowShift{
+  0%{ filter:hue-rotate(0deg); background-position: 0% 50%; }
+  50%{ filter:hue-rotate(180deg); background-position: 100% 50%; }
+  100%{ filter:hue-rotate(360deg); background-position: 0% 50%; }
+}
+
+/* Conteneur standard pour test/autoindex/404 */
+.container{
+  width: 100%;
+  max-width: 980px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+/* Titres */
+h1{
+  font-size: clamp(2rem, 5vw, 4rem);
+  text-shadow: 2px 2px 8px var(--shadow);
+  margin: 24px 0 12px;
+}
+h2{ margin: 12px 0; }
+h3{ margin: 10px 0; }
+
+/* Sous-titres / texte */
+.subtitle, .muted{ color: var(--muted); }
+p{ line-height: 1.6; }
+
+/* Liens généraux */
+a{
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px var(--shadow);
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+}
+a:hover{ transform: scale(1.05); background: var(--glass-strong); box-shadow: 0 0 16px var(--shadow); }
+a.link{ background: none; box-shadow: none; font-weight: 600; }
+a.link:hover{ text-decoration: underline; transform:none; }
+
+/* Boutons */
+button{
+  cursor:pointer;
+  border:1px solid var(--card-border);
+  border-radius:10px;
+  padding:10px 14px;
+  background: var(--glass);
+  color:#fff;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+}
+button:hover{ transform: translateY(-1px); background: var(--glass-strong); box-shadow: 0 8px 18px var(--shadow); }
+button:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* Inputs */
+input[type="text"], input[type="file"]{
+  color:#fff;
+  background: rgba(255,255,255,0.12);
+  border:1px solid var(--card-border);
+  border-radius:10px;
+  padding:10px 12px;
+  outline:none;
+  backdrop-filter: blur(10px);
+}
+input::file-selector-button{
+  border:1px solid var(--card-border);
+  border-radius:8px;
+  background: var(--glass);
+  color:#fff;
+  padding:6px 10px;
+  margin-right:8px;
+  cursor:pointer;
+}
+
+/* Cartes & layout */
+.card{
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  padding:16px;
+  margin:16px 0;
+  background: rgba(0,0,0,0.18);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.row{ display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
+.pill{ font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--card-border); background: rgba(255,255,255,0.08); }
+
+/* Listes de fichiers (test.html) */
+.files{ list-style:none; padding:0; margin:0; }
+.files li{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  border-bottom:1px dashed rgba(255,255,255,0.25);
+  padding:10px 0;
+}
+.files li:last-child{ border-bottom:none; }
+
+/* Zones de status / logs */
+.status{
+  white-space: pre-wrap;
+  background:#0a0a0a;
+  color:#e6ffe6;
+  padding:10px;
+  border-radius:8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:.92em;
+  overflow:auto;
+  max-height: 280px;
+  border:1px solid rgba(255,255,255,0.15);
+}
+.ok{ color: var(--ok); }
+.bad{ color: var(--bad); }
+
+/* Page index — centrage vertical/horizontal */
+.index-center{
+  min-height: 100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.index-links{
+  display:flex; flex-direction:column; gap:18px;
+}
+
+/* Autoindex (template) */
+ul.autoindex{ list-style:none; padding:0; margin: 12px 0; }
+ul.autoindex li{ padding:16px 0; }
+
+/* 404 simple */
+.center-404{
+  min-height: 100vh;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+}
+
+/* Petites largeurs */
+@media (max-width: 560px){
+  .row{ gap:8px; }
+  .files li{ flex-direction: column; align-items: flex-start; }
+}
