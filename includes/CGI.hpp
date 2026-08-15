@@ -1,3 +1,5 @@
+#include <unistd.h>
+#include <signal.h>
 #ifndef CGI_HPP
 #define CGI_HPP
 
